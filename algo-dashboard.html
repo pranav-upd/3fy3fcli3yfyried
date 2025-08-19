@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLV-ALGO :: System Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- THEME & TYPOGRAPHY (Firebase Inspired) --- */
+        :root {
+            --bg-main: #121212;
+            --bg-nav: #1e1e1e;
+            --bg-content: #1e1e1e;
+            --bg-header: #1e1e1e;
+            --bg-hover: #2a2a2a;
+            --text-primary: #e0e0e0;
+            --text-secondary: #8a8a8a;
+            --border-color: #3a3a3a;
+            --accent-orange: #ff9800;
+            --accent-orange-hover: #fb8c00;
+            --status-green: #4caf50;
+            --status-red: #f44336;
+            --status-yellow: #ffc107;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        @keyframes pulse {
+            50% { opacity: 0.7; }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-sans);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: 60px 1fr;
+            grid-template-areas:
+                "nav header"
+                "nav content";
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* --- LAYOUT COMPONENTS --- */
+        .app-header {
+            grid-area: header;
+            background-color: var(--bg-header);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            padding: 0 30px;
+            justify-content: space-between;
+        }
+
+        .left-nav {
+            grid-area: nav;
+            background-color: var(--bg-nav);
+            border-right: 1px solid var(--border-color);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            grid-area: content;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        /* --- HEADER & SEARCH --- */
+        .header-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .search-container {
+            position: relative;
+        }
+
+        .search-input {
+            background-color: var(--bg-hover);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            padding: 8px 40px 8px 35px; /* Added padding for clear button */
+            font-size: 14px;
+            width: 300px;
+            transition: all 0.2s ease;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 2px rgba(255, 152, 0, 0.3);
+        }
+        .search-container::before {
+            content: '⌕'; /* Search icon */
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 16px;
+            pointer-events: none;
+        }
+        .search-clear-btn {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 1;
+            padding: 0;
+            display: none; /* Hidden by default */
+        }
+        .search-clear-btn:hover {
+            color: var(--text-primary);
+        }
+
+
+        /* --- LEFT NAVIGATION --- */
+        .nav-header {
+            font-size: 24px;
+            font-weight: 700;
+            padding: 0 25px 30px 25px;
+            color: var(--accent-orange);
+        }
+
+        .nav-menu { list-style: none; padding: 20px 0; margin: 0; }
+        .nav-item a {
+            display: block;
+            padding: 15px 25px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+        .nav-item a:hover { background-color: var(--bg-hover); color: var(--text-primary); }
+        .nav-item a.active {
+            background-color: var(--bg-hover);
+            border-left-color: var(--accent-orange);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* --- TABS & CONTENT AREA --- */
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+        .tab-link {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .tab-link:hover { color: var(--text-primary); }
+        .tab-link.active {
+            color: var(--accent-orange);
+            border-bottom-color: var(--accent-orange);
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        .content-section {
+            background-color: var(--bg-content);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+        }
+
+        /* --- HEALTH, DB, & LOG CHECK LIST ITEMS --- */
+       /* --- Lists & Items --- */
+.health-check-list, .db-check-list, .log-health-list {
+    padding: 0;
+    position: relative;
+}
+
+.health-check-item, .db-check-item, .log-health-item {
+    display: grid;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.health-check-item { grid-template-columns: 1fr auto; }
+.db-check-item { grid-template-columns: 1fr auto auto; gap: 20px; }
+.log-health-item { grid-template-columns: 1fr; }
+
+.health-check-item:last-child, .db-check-item:last-child, .log-health-item:last-child {
+    border-bottom: none;
+}
+
+/* --- Item Info --- */
+.item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.item-name { font-weight: 600; font-size: 16px; }
+
+.item-url {
+    font-size: 13px;
+    color: var(--text-secondary);
+    word-break: break-all;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.item-url:hover {
+    color: var(--accent-orange);
+    text-decoration: underline;
+}
+
+.item-table-name { font-family: monospace; }
+
+/* --- Stats Section --- */
+.item-stats { display: flex; gap: 25px; }
+.stat { text-align: right; }
+.stat-label { font-size: 12px; color: var(--text-secondary); }
+.stat-value { display: block; font-weight: 600; font-size: 16px; min-width: 120px; }
+
+/* --- No Results Message --- */
+.no-results-message {
+    padding: 40px 25px;
+    text-align: center;
+    color: var(--text-secondary);
+    display: none; /* Hidden by default */
+}
+
+/* --- Status Pills (endpoint health) --- */
+.status-pill {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: white;
+    text-transform: capitalize;
+    transition: background 0.2s ease;
+}
+
+.status-pill.healthy { background-color: #28a745; } /* green */
+.status-pill.unhealthy { background-color: #dc3545; } /* red */
+.status-pill.down { background-color: #6c757d; } /* gray */
+
+/* --- Token Pills --- */
+.token-status-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.sub-status-pill {
+    padding: 4px 8px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+    cursor: default;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+
+.sub-status-pill.valid { background-color: #28a745; }   /* green */
+.sub-status-pill.invalid { background-color: #dc3545; } /* red */
+.sub-status-pill.unknown { background-color: #6c757d; } /* gray */
+
+/* --- Loading / Error Text --- */
+.loading-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.error-text {
+    font-size: 13px;
+    color: #dc3545;
+    font-weight: 600;
+}
+
+/* --- Tooltips --- */
+.sub-status-pill[title] {
+    position: relative;
+}
+
+.sub-status-pill[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 120%;
+    background: #333;
+    color: #fff;
+    padding: 6px 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    white-space: pre-line;
+    z-index: 1000;
+    opacity: 0.95;
+}
+
+
+        /* --- STATUS INDICATORS --- */
+        /* --- STATUS INDICATORS (DB Check: COMPLETED / STARTED / FAILED) --- */
+.status-pill {
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #000;
+    min-width: 100px;
+    text-align: center;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Loading state */
+.status-pill.loading {
+    background-color: #424242;
+    color: var(--text-primary);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* DB check normalized statuses */
+.status-pill.completed {
+    background-color: var(--status-green);
+    color: #000;
+}
+
+.status-pill.started {
+    background-color: var(--status-yellow);
+    color: #000;
+}
+
+.status-pill.failed {
+    background-color: var(--status-red);
+    color: #000;
+}
+
+/* Token status pills */
+.sub-status-pill {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    color: #000;
+    transition: all 0.3s ease-in-out;
+}
+.sub-status-pill.valid { background-color: var(--status-green); }
+.sub-status-pill.invalid { background-color: var(--status-red); }
+.sub-status-pill.unknown { background-color: var(--status-yellow); }
+
+.loading-text {
+    font-style: italic;
+    color: var(--text-secondary);
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.error-text { font-weight: 600; color: var(--status-red); }
+
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <h1 class="header-title">System Dashboard</h1>
+    <div class="search-container">
+        <input type="text" id="search-input" class="search-input" placeholder="Search items...">
+        <button id="search-clear-btn" class="search-clear-btn">&times;</button>
+    </div>
+</header>
+
+<nav class="left-nav">
+    <div class="nav-header">SLV-ALGO</div>
+    <ul class="nav-menu">
+        <li class="nav-item"><a href="#" class="active" data-page="health-check">Health Check</a></li>
+        <li class="nav-item"><a href="#" data-page="db-check">DB Check</a></li>
+        <li class="nav-item"><a href="#" data-page="log-health">Log Health</a></li>
+    </ul>
+</nav>
+
+<main class="main-content" id="main-content-area">
+    <!-- Content will be dynamically generated here -->
+</main>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // --- Configuration ---
+        const endpoints = {
+            health: [
+                { name: "Screener Data Loader", url: "http://screener-nlb-d8059e9e476dd301.elb.ap-south-1.amazonaws.com:8000/screener_data_loader/health" },
+                { name: "Signal Data Loader", url: "http://signalloader-nlb-bfd073fb8c20f37e.elb.ap-south-1.amazonaws.com:8000/signal_data_loader/health" },
+                { name: "Signal Processor", url: "http://ec2-13-200-116-122.ap-south-1.compute.amazonaws.com:8001/signal_processor/health" },
+                { name: "Stock Processing & Ranking", url: "http://ec2-13-200-116-122.ap-south-1.compute.amazonaws.com:8002/stock_processing_ranking/health" },
+                { name: "Order & Position Manager", url: "http://ec2-13-200-116-122.ap-south-1.compute.amazonaws.com:8003/order_position_manager/health" }
+            ],
+            token: [
+                { name: "Signal Processor Tokens", url: "http://ec2-13-200-116-122.ap-south-1.compute.amazonaws.com:8001/check_signal_processor_token/v1/" },
+                { name: "Stock Processor Tokens", url: "http://ec2-13-200-116-122.ap-south-1.compute.amazonaws.com:8002/check_stock_processor_token/v1/" },
+                { name: "Order Manager Tokens", url: "http://ec2-13-200-116-122.ap-south-1.compute.amazonaws.com:8003/order_position_manager_token/v1/" }
+            ]
+        };
+
+        const dbTables = [
+            { name: "Open High Low", tableName: "load_screener_open_high_low" },
+            { name: "Resistance Breakout", tableName: "load_screener_resistance_breakout" },
+            { name: "Support Breakdown", tableName: "load_screener_support_breakdown" },
+            { name: "Index Performance", tableName: "load_screener_index_performance" },
+            { name: "Sector Performance", tableName: "load_screener_sector_performance" },
+            { name: "Sector Advance & Decline", tableName: "load_screener_sector_advance_decline" },
+            { name: "Index Contributors", tableName: "load_screener_index_contributor" },
+            { name: "BWIS Screener", tableName: "load_screener_bwis" }
+        ];
+
+        const logLinks = [
+            { name: "Buy_swing_breakout", url: "https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/$252Faws$252Ffargate$252Fswing_trade_actions/log-events/Buy_swing_breakout" },
+            { name: "Trade_MRF_UT_BOT_15", url: "https://us-east-1.console.aws.amazon.com/cloudwatch/home?region=us-east-1#logsV2:log-groups/log-group/$252Faws$252Flightsail$252Fintraday_actions/log-events/Trade_MRF_UT_BOT_15" }
+        ];
+
+        const mainContentArea = document.getElementById('main-content-area');
+        let refreshInterval;
+
+        // --- Page Rendering ---
+        function renderHealthCheckPage() {
+            const html = `
+            <nav class="tab-nav" id="tab-nav">
+                <span class="tab-link active" data-tab="endpoints">Endpoint Health</span>
+                <span class="tab-link" data-tab="tokens">Token Health</span>
+            </nav>
+            <div id="tab-content">
+                <div id="endpoints-panel" class="tab-panel active">
+                    <div class="content-section">
+                        <div class="health-check-list" id="endpoint-health-list">
+                            <div class="no-results-message">No results found.</div>
+                        </div>
+                    </div>
+                </div>
+                <div id="tokens-panel" class="tab-panel">
+                    <div class="content-section">
+                        <div class="health-check-list" id="token-health-list">
+                            <div class="no-results-message">No results found.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+            mainContentArea.innerHTML = html;
+
+            populateHealthCheckLists();
+            addTabListeners();
+            addSearchListener();
+
+            triggerAllHealthChecks();
+            startAutoRefresh(triggerAllHealthChecks);
+        }
+
+        function renderDbCheckPage() {
+            stopAutoRefresh();
+            const html = `
+            <div class="content-section">
+                <div class="db-check-list" id="db-check-list">
+                    <div class="no-results-message">No results found.</div>
+                </div>
+            </div>
+            `;
+            mainContentArea.innerHTML = html;
+
+            populateDbCheckList();
+            addSearchListener();
+
+            triggerAllDbChecks();
+            startAutoRefresh(triggerAllDbChecks);
+        }
+
+        function renderLogHealthPage() {
+            stopAutoRefresh();
+            const html = `
+            <div class="content-section">
+                <div class="log-health-list" id="log-health-list">
+                    <div class="no-results-message">No results found.</div>
+                </div>
+            </div>
+            `;
+            mainContentArea.innerHTML = html;
+
+            populateLogHealthList();
+            addSearchListener();
+        }
+
+        function createItemHTML(id, name, url, isToken = false) {
+            const statusContainer = isToken
+                ? `<div class="token-status-container"><span class="loading-text">Loading...</span></div>`
+                : `<div class="status-pill loading">Loading...</div>`;
+
+            return `
+            <div class="health-check-item" id="${id}" data-name="${name.toLowerCase()}" data-url="${url.toLowerCase()}">
+                <div class="item-info">
+                    <span class="item-name">${name}</span>
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" class="item-url">${url}</a>
+                </div>
+                ${statusContainer}
+            </div>`;
+        }
+
+        function createDbItemHTML(id, name, tableName) {
+            return `
+            <div class="db-check-item" id="${id}" data-name="${name.toLowerCase()}" data-table-name="${tableName.toLowerCase()}">
+                <div class="item-info">
+                    <span class="item-name">${name}</span>
+                    <span class="item-table-name">${tableName}</span>
+                </div>
+                <div class="item-stats">
+                    <div class="stat">
+                        <span class="stat-label">Last Updated</span>
+                        <span class="stat-value" id="ts-${id}">Loading...</span>
+                    </div>
+                </div>
+                <div class="status-pill loading">Loading...</div>
+            </div>`;
+        }
+
+        function createLogItemHTML(id, name, url) {
+            return `
+            <div class="log-health-item" id="${id}" data-name="${name.toLowerCase()}" data-url="${url.toLowerCase()}">
+                <div class="item-info">
+                    <span class="item-name">${name}</span>
+                    <a href="${url}" target="_blank" rel="noopener noreferrer" class="item-url">${url}</a>
+                </div>
+            </div>`;
+        }
+
+        function populateHealthCheckLists() {
+            const endpointList = document.getElementById('endpoint-health-list');
+            const tokenList = document.getElementById('token-health-list');
+
+            // Prepend items to the list, keeping the no-results message at the end
+            endpointList.insertAdjacentHTML('afterbegin', endpoints.health.map((ep, i) => createItemHTML(`ep-health-${i}`, ep.name, ep.url)).join(''));
+            tokenList.insertAdjacentHTML('afterbegin', endpoints.token.map((ep, i) => createItemHTML(`token-health-${i}`, ep.name, ep.url, true)).join(''));
+        }
+
+        function populateDbCheckList() {
+            const dbList = document.getElementById('db-check-list');
+            dbList.insertAdjacentHTML('afterbegin', dbTables.map((table, i) => createDbItemHTML(`db-item-${i}`, table.name, table.tableName)).join(''));
+        }
+
+        function populateLogHealthList() {
+            const logList = document.getElementById('log-health-list');
+            logList.insertAdjacentHTML('afterbegin', logLinks.map((log, i) => createLogItemHTML(`log-item-${i}`, log.name, log.url)).join(''));
+        }
+
+
+        // --- API Fetching & Status Updates ---
+        async function checkEndpointHealth(index, url) {
+            const item = document.getElementById(`ep-health-${index}`);
+            if (!item) return;
+            const pill = item.querySelector('.status-pill');
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+
+                const isHealthy = data?.status?.toLowerCase().includes("healthy");
+
+                updatePill(pill, isHealthy ? 'healthy' : 'unhealthy', isHealthy ? 'Healthy' : 'Unhealthy');
+            } catch (error) {
+                console.error(`Error fetching endpoint health for ${url}:`, error);
+                // Differentiate between a server that's down vs. one that reports an unhealthy status
+                updatePill(pill, 'down', 'Down');
+            }
+        }
+
+        async function checkTokenHealth(index, url) {
+            const item = document.getElementById(`token-health-${index}`);
+            if (!item) return;
+            const container = item.querySelector('.token-status-container');
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+
+                container.innerHTML = ''; // Clear loading text
+
+                // FIX: Updated to correctly parse the array of token objects
+                if (data?.token_status && Array.isArray(data.token_status)) {
+
+                    if (data.token_status.length === 0) {
+                        container.innerHTML = `<span class="loading-text">No tokens found</span>`;
+                        return;
+                    }
+
+                    // Iterate over each token object in the array
+                    data.token_status.forEach(token => {
+                        const subPill = document.createElement('div');
+                        const status = String(token.status).toLowerCase();
+
+                        let statusClass = 'unknown';
+                        if (status.includes('valid')) statusClass = 'valid';
+                        if (status.includes('invalid')) statusClass = 'invalid';
+
+                        subPill.className = `sub-status-pill ${statusClass}`;
+
+                        // Use the "Initial" field from the API response for the text
+                        subPill.textContent = token.Initial || '?';
+
+                        // Create a detailed tooltip with the name and reason
+                        const reason = token.reason || 'No reason provided';
+                        subPill.title = `${token.Name}: ${token.status}\nReason: ${reason}`;
+
+                        container.appendChild(subPill);
+                    });
+                } else {
+                    // This will now catch any response that isn't the expected array format
+                    throw new Error("Invalid or unexpected token data format");
+                }
+            } catch (error) {
+                console.error(`Error fetching token health for ${url}:`, error);
+                container.innerHTML = `<span class="error-text">Down</span>`;
+            }
+        }
+
+async function fetchAllScreenerStatus() {
+    try {
+        const response = await fetch('http://127.0.0.1:5000/latest_screeners');
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        dbTables.forEach((table, index) => {
+            const itemId = `db-item-${index}`;
+            const itemElement = document.getElementById(itemId);
+            if (!itemElement) return;
+            const timestampEl = document.getElementById(`ts-${itemId}`);
+            const pill = itemElement.querySelector('.status-pill');
+            const screenerData = data[table.tableName];
+
+            if (screenerData) {
+                timestampEl.textContent = screenerData.created_at || "N/A";
+                // Normalize status
+                let status = (screenerData.status || 'UNKNOWN').toUpperCase();
+                if (status.includes('COMPLETED')) status = 'COMPLETED';
+                else if (status.includes('STARTED') || status.includes('RUNNING')) status = 'STARTED';
+                else status = 'FAILED'; // Treat all other cases as FAILED
+
+                updatePill(pill, status.toLowerCase(), status);
+            } else {
+                timestampEl.textContent = "N/A";
+                updatePill(pill, 'failed', 'FAILED');
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching screener status:', error);
+        dbTables.forEach((table, index) => {
+            const itemId = `db-item-${index}`;
+            const itemElement = document.getElementById(itemId);
+            if (!itemElement) return;
+            document.getElementById(`ts-${itemId}`).textContent = "N/A";
+            updatePill(itemElement.querySelector('.status-pill'), 'failed', 'FAILED');
+        });
+    }
+}
+
+function updatePill(pillElement, statusClass, text) {
+    // Reset classes and apply new
+    pillElement.className = `status-pill ${statusClass}`;
+    pillElement.textContent = text;
+}
+
+
+        // --- Event Listeners & Interactions ---
+        function addTabListeners() {
+            document.getElementById('tab-nav').addEventListener('click', (e) => {
+                if (e.target.classList.contains('tab-link')) {
+                    const tabId = e.target.dataset.tab;
+                    document.querySelector('.tab-link.active').classList.remove('active');
+                    document.querySelector('.tab-panel.active').classList.remove('active');
+                    e.target.classList.add('active');
+                    document.getElementById(`${tabId}-panel`).classList.add('active');
+
+                    document.getElementById('search-input').value = '';
+                    document.getElementById('search-input').dispatchEvent(new Event('input'));
+                }
+            });
+        }
+
+        function addSearchListener() {
+            const searchInput = document.getElementById('search-input');
+            const clearBtn = document.getElementById('search-clear-btn');
+
+            searchInput.addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const activePage = document.querySelector('.nav-item a.active').dataset.page;
+                let list;
+
+                if (activePage === 'health-check') {
+                    const activePanelId = document.querySelector('.tab-panel.active').id;
+                    list = document.getElementById(activePanelId.replace('panel', 'health-list'));
+                } else if (activePage === 'db-check') {
+                    list = document.getElementById('db-check-list');
+                } else if (activePage === 'log-health') {
+                    list = document.getElementById('log-health-list');
+                }
+
+                if (!list) return;
+
+                const items = list.querySelectorAll('.health-check-item, .db-check-item, .log-health-item');
+                const noResultsMsg = list.querySelector('.no-results-message');
+
+                let visibleCount = 0;
+                items.forEach(item => {
+                    const name = item.dataset.name || '';
+                    const url = item.dataset.url || '';
+                    const tableName = item.dataset.tableName || '';
+                    const isVisible = name.includes(searchTerm) || url.includes(searchTerm) || tableName.includes(searchTerm);
+                    item.style.display = isVisible ? 'grid' : 'none';
+                    if(isVisible) visibleCount++;
+                });
+
+                noResultsMsg.style.display = visibleCount === 0 ? 'block' : 'none';
+                clearBtn.style.display = e.target.value.length > 0 ? 'block' : 'none';
+            });
+
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
+
+        // --- Auto-Refresh & Navigation ---
+        function triggerAllHealthChecks() {
+            endpoints.health.forEach((ep, i) => checkEndpointHealth(i, ep.url));
+            endpoints.token.forEach((ep, i) => checkTokenHealth(i, ep.url));
+        }
+
+        function triggerAllDbChecks() {
+            fetchAllScreenerStatus();
+        }
+
+        function startAutoRefresh(checkFunction) {
+            stopAutoRefresh();
+            refreshInterval = setInterval(checkFunction, 60000); // 1 minute
+        }
+
+        function stopAutoRefresh() {
+            clearInterval(refreshInterval);
+        }
+
+        document.querySelector('.nav-menu').addEventListener('click', (e) => {
+            if (e.target.tagName === 'A') {
+                e.preventDefault();
+                document.querySelector('.nav-item a.active').classList.remove('active');
+                e.target.classList.add('active');
+                const page = e.target.dataset.page;
+                if (page === 'health-check') {
+                    renderHealthCheckPage();
+                } else if (page === 'db-check') {
+                    renderDbCheckPage();
+                } else if (page === 'log-health') {
+                    renderLogHealthPage();
+                }
+            }
+        });
+
+        // --- Initial Load ---
+        renderHealthCheckPage();
+    });
+</script>
+</body>
+</html>
